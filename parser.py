@@ -1,4 +1,3 @@
-
 import requests
 
 def get_price(article):
@@ -8,12 +7,17 @@ def get_price(article):
         response.raise_for_status()
         data = response.json()
 
-        product = data["data"]["products"][0]
-        price = product.get("priceU")
+        products = data.get("data", {}).get("products", [])
+        if not products:
+            print("❌ Товар не найден в ответе от WB API")
+            return None
 
+        price = products[0].get("priceU")
         if price:
-            return int(price / 100)  # цена в копейках, делим на 100
-        return None
+            return int(price / 100)
+        else:
+            print("❌ Цена не найдена")
+            return None
     except Exception as e:
-        print("Ошибка при получении цены:", e)
+        print("❌ Ошибка при получении цены:", e)
         return None
