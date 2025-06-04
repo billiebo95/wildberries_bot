@@ -1,5 +1,5 @@
 import requests
-import re
+from bs4 import BeautifulSoup
 
 def get_price(article):
     try:
@@ -8,16 +8,18 @@ def get_price(article):
             "User-Agent": "Mozilla/5.0"
         }
         response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+        response.encoding = 'utf-8'
 
-        # Ищем цену в HTML (цена с учётом скидок)
-        match = re.search(r'"price":(\d+),', response.text)
-        if match:
-            price = int(match.group(1)) / 100  # цена в копейках
-            return int(price)
+        soup = BeautifulSoup(response.text, "html.parser")
 
-        print("❌ Не нашли цену на странице товара")
+        price_tag = soup.select_one("ins.price-block__final-price.wallet")
+        if price_tag:
+            price_text = price_tag.text.strip().replace('\xa0', '').replace('₽', '')
+            return int(price_text)
+
+        print("❌ Цена не найдена в HTML")
         return None
+
     except Exception as e:
         print("❌ Ошибка при парсинге:", e)
         return None
